@@ -6,10 +6,10 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+@Entity
 @Enabled
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
-
 public class GenericMedicine {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
@@ -21,5 +21,5 @@ public class GenericMedicine {
 
     //One Generic Medicine Can Have Many BrandedMedicine
     @OneToMany(mappedBy ="genericMedicine",cascade = CascadeType.ALL,orphanRemoval = true)
-    private List<Brandedmedicine> brandedMedicines=new ArrayList<>();
+    private List<BrandedMedicine> brandedMedicines=new ArrayList<>();
 }

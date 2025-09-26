@@ -25,13 +25,13 @@ public class User {
     private String phone;
     private String role; // USER, ADMIN, PHARMACIST
 
-    @ManyToOne
-    @JoinColumn(name = "generic_medicine_id")
+//    @ManyToOne
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Order> orders = new ArrayList<>();
 
 
-    @OneToMany(mappedBy = "brandedMedicine", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MedicineDonation> donations =  new ArrayList<>();
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MedicineDonation> donations = new ArrayList<>();
 
 
 }
