@@ -4,6 +4,8 @@ import com.demo.medsahispringboot.Entity.BrandedMedicine;
 import com.demo.medsahispringboot.Entity.Order;
 import com.demo.medsahispringboot.Entity.OrderItem;
 import com.demo.medsahispringboot.Repository.BrandedMedicineRepository;
+import com.demo.medsahispringboot.Repository.OrderItemRepository;
+import com.demo.medsahispringboot.Repository.OrderRepository;
 import com.demo.medsahispringboot.Service.OrderItemService;
 import org.springframework.stereotype.Service;
 
@@ -46,6 +48,6 @@ public class OrderItemServiceImpl implements OrderItemService {
 
     @Override
     public void deleteOrderItem(Long id){
-        orderItemRepository.deleteByid(id);
+        orderItemRepository.deleteById(id);
     }
 }

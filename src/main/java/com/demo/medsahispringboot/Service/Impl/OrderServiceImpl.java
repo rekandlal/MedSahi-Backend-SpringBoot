@@ -2,6 +2,7 @@ package com.demo.medsahispringboot.Service.Impl;
 
 import com.demo.medsahispringboot.Entity.Order;
 import com.demo.medsahispringboot.Entity.User;
+import com.demo.medsahispringboot.Repository.OrderRepository;
 import com.demo.medsahispringboot.Repository.UserRepository;
 import com.demo.medsahispringboot.Service.OrderService;
 import org.springframework.stereotype.Service;
@@ -15,35 +16,39 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
 
-    public OrderServiceImpl(OrderRepository orderRepository,UserRepository userRepository){
+    public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository) {
         this.orderRepository = orderRepository;
-        this.userRepository= userRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
-    public Order createOrder(Order order, Long userid){
-        User user=userRepository.findById(userId)
-                .orElseThrow(()->new RuntimeException("User Not Found with the given Id:"+userid));
-                order.setUser(user);
-                order.setOrderDate(LocalDate.now());
-                return orderRepository.save(order);
+    public Order createOrder(Order order, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        order.setUser(user);
+        order.setOrderDate(LocalDate.now());
+        return orderRepository.save(order);
     }
 
     @Override
-    public List<Order> getAllOrders(){
+    public List<Order> getAllOrders() {
         return orderRepository.findAll();
     }
 
     @Override
-    public Order getOrderById(Long id){
+    public Order getOrderById(Long id) {
         return orderRepository.findById(id)
-                .orElseThrow(()->new RuntimeException("Order not Found with the id:"+id));
-
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + id));
     }
 
     @Override
-    public List<Order> getOrdersByUser(Long id,Order order){
-        Order existing=getOrderById(id);
+    public List<Order> getOrdersByUser(Long userId) {
+        return orderRepository.findByUserId(userId);
+    }
+
+    @Override
+    public Order updateOrder(Long id, Order order) {
+        Order existing = getOrderById(id);
         existing.setStatus(order.getStatus());
         existing.setPaymentMode(order.getPaymentMode());
         existing.setTotalAmount(order.getTotalAmount());
@@ -51,7 +56,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public void deleteOrder(Long id){
+    public void deleteOrder(Long id) {
         orderRepository.deleteById(id);
     }
 }
