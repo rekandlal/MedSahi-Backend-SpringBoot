@@ -7,9 +7,8 @@ import java.util.List;
 public interface GenericMedicineService {
     //Used For saving the generic Medicine
     GenericMedicine saveGenericMedicine(GenericMedicine genericMedicine);
-
-    List<GenericMedicine> getAllGenericMedicine();
+    List<GenericMedicine> getAllGenericMedicines();
     GenericMedicine getGenericMedicineById(Long id);
     GenericMedicine updateGenericMedicine(Long id,GenericMedicine genericMedicine);
-    void deleteGenericMedicineById(Long id);
+    void deleteGenericMedicine(Long id);
 }
