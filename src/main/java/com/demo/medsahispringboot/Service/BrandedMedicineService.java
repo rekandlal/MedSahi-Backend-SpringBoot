@@ -1,4 +1,4 @@
-package com.demo.medsahispringboot.Controller;
+package com.demo.medsahispringboot.Service;
 
 import com.demo.medsahispringboot.Entity.BrandedMedicine;
 
@@ -11,6 +11,6 @@ public interface BrandedMedicineService {
     BrandedMedicine getBrandedMedicineById(Long id);
     BrandedMedicine updateBrandedMedicine(Long id,BrandedMedicine brandedMedicine);
     void deleteBrandedMedicine(Long id);
-    List<BrandedMedicine> getBrandedByGenericid(Long genericMedicineId);
+    List<BrandedMedicine> getBrandedByGenericId(Long genericMedicineId);
 
 }

@@ -1,10 +1,10 @@
-package com.example.medsahi.service.impl;
+package com.demo.medsahispringboot.Service.Impl;
 
-import com.example.medsahi.entity.BrandedMedicine;
-import com.example.medsahi.entity.GenericMedicine;
-import com.example.medsahi.repository.BrandedMedicineRepository;
-import com.example.medsahi.repository.GenericMedicineRepository;
-import com.example.medsahi.service.BrandedMedicineService;
+import com.demo.medsahispringboot.Entity.BrandedMedicine;
+import com.demo.medsahispringboot.Entity.GenericMedicine;
+import com.demo.medsahispringboot.Repository.BrandedMedicineRepository;
+import com.demo.medsahispringboot.Repository.GenericMedicineRepository;
+import com.demo.medsahispringboot.Service.BrandedMedicineService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
