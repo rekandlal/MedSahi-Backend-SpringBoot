@@ -5,6 +5,7 @@ import com.demo.medsahispringboot.Dto.LoginResponse;
 import com.demo.medsahispringboot.Dto.RegisterRequest;
 import com.demo.medsahispringboot.Entity.User;
 import com.demo.medsahispringboot.Repository.UserRepository;
+import com.demo.medsahispringboot.Service.AuthService;
 import com.demo.medsahispringboot.Util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,13 +13,13 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class AuthServiceImpl {
+public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
     @Override
-    public String register(RegisterRequest request){
+    public  String register(RegisterRequest request){
         if(userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email Already Exists");
         }
@@ -32,8 +33,8 @@ public class AuthServiceImpl {
                 .role("USER")
                 .build();
 
-        UserRepository.save(user);
-        return "User registerd Sucessfully";
+        userRepository.save(user);
+        return "User registered successfully!";
     }
 
     @Override

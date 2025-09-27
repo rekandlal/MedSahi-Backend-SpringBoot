@@ -7,7 +7,7 @@ import java.util.Date;
 
 @Component
 public class JwtUtil {
-    private final String SECRET_KEY = "mySecretKey"; // 🔒 keep in application.yml
+    private final String SECRET_KEY = "01234567890123456789012345678901"; // 🔒 keep in application.yml
     private final long EXPIRATION_TIME = 1000 * 60 * 60; // 1 hour
 
     public String generateToken(String email) {
