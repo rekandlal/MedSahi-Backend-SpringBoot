@@ -2,6 +2,7 @@ package com.demo.medsahispringboot.Service.Impl;
 
 import com.demo.medsahispringboot.Dto.UserDto;
 import com.demo.medsahispringboot.Entity.User;
+import com.demo.medsahispringboot.Repository.UserRepository;
 import com.demo.medsahispringboot.Service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,13 +19,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto registerUser(UserDto userDto, String rawPassword){
-        User user=User.builder()
+        User user = User.builder()
                 .name(userDto.getName())
                 .email(userDto.getEmail())
                 .password(passwordEncoder.encode(rawPassword))
-                .address(userDto.getAdress())
+                .address(userDto.getAddress())
                 .phone(userDto.getPhone())
-                .role(userDto.getRole()!=null ?userDtp.getRole():"USER")
+                .role(userDto.getRole()!=null ?userDto.getRole():"USER")
                 .build();
 
         User saved=userRepository.save(user);
@@ -34,9 +35,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUserById(Long id) {
-        return userRepository.findbyId(id)
-                .map(this::mapToDo)
-                .orElseThrow(()->new RuntimeException("User Not Found"))
+        return userRepository.findById(id)
+                .map(this::mapToDto)
+                .orElseThrow(()->new RuntimeException("User Not Found"));
     }
 
     @Override
