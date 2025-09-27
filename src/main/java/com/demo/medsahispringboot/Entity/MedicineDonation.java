@@ -22,7 +22,7 @@ public class MedicineDonation {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private User user; // 👈 yeh naam "mappedBy" ke liye match hona chahiye
+    private User user; //  yeh naam "mappedBy" ke liye match hona chahiye
 
     @ManyToOne
     @JoinColumn(name = "medicine_info_id")
