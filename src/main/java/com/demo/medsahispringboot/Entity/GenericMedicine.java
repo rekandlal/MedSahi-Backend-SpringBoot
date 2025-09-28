@@ -3,16 +3,14 @@ package com.demo.medsahispringboot.Entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
-
 @Entity
-@Table(name = "branded_medicines")
+@Table(name = "generic_medicines")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class BrandedMedicine {
+public class GenericMedicine {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,8 +24,9 @@ public class BrandedMedicine {
     private double finalPrice;
     private String form;
 
-    // One branded medicine → multiple generic alternatives
-    @OneToMany(mappedBy = "brandedMedicine", cascade = CascadeType.ALL)
-    private List<GenericMedicine> alternatives;
+    // Many generics → one branded medicine
+    @ManyToOne
+    @JoinColumn(name = "branded_id")
+    private BrandedMedicine brandedMedicine;
 }
 
