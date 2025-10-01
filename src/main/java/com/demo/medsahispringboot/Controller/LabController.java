@@ -1,5 +1,7 @@
 package com.demo.medsahispringboot.Controller;
 
+
+import com.demo.medsahispringboot.Dto.LabTestDTO;
 import com.demo.medsahispringboot.Entity.LabTest;
 import com.demo.medsahispringboot.Entity.User;
 import com.demo.medsahispringboot.Repository.LabTestRepository;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/lab")
@@ -50,7 +53,17 @@ public class LabController {
         User user = userOpt.get();
 
         List<LabTest> tests = labTestRepository.findByUserId(user.getId());
-        return ResponseEntity.ok(tests);
+
+        // Convert Entity -> DTO
+        List<LabTestDTO> response = tests.stream()
+                .map(test -> new LabTestDTO(
+                        test.getId(),
+                        test.getTestName(),
+                        test.getStatus(),
+                        test.getRequestedAt()
+                ))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(response);
     }
 }
-

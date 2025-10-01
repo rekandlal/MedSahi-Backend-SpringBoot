@@ -13,25 +13,25 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Order {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
     private User user;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "order_medicines",
-            joinColumns = @JoinColumn(name="order_id"),
-            inverseJoinColumns = @JoinColumn(name="medicine_id")
+            joinColumns = @JoinColumn(name = "order_id"),
+            inverseJoinColumns = @JoinColumn(name = "medicine_id")
     )
     private List<Medicine> medicines;
 
     private Double totalAmount;
+    private String status; // PLACED, DELIVERED, CANCELLED etc.
 
-    private LocalDateTime orderTime = LocalDateTime.now();
-
-    private String status = "PLACED"; // PLACED, DELIVERED, CANCELLED etc.
+    private LocalDateTime orderTime;
 }
-

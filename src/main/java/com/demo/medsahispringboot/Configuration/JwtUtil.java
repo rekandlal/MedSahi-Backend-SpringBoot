@@ -6,25 +6,28 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
-import java.util.Date;
+import java.util.*;
 import java.util.function.Function;
 
 @Component
 public class JwtUtil {
 
     private final Key key;
-    private final long jwtExpirationMs;
+    private final long expirationMs;
 
     public JwtUtil(@Value("${jwt.secret}") String secret,
-                   @Value("${jwt.expiration-ms:3600000}") long jwtExpirationMs) {
+                   @Value("${jwt.expiration-ms}") long expirationMs) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
-        this.jwtExpirationMs = jwtExpirationMs;
+        this.expirationMs = expirationMs;
     }
 
-    public String generateToken(String username) {
+    public String generateToken(String username, List<String> roles) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("roles", roles);
         Date now = new Date();
-        Date exp = new Date(now.getTime() + jwtExpirationMs);
+        Date exp = new Date(now.getTime() + expirationMs);
         return Jwts.builder()
+                .setClaims(claims)
                 .setSubject(username)
                 .setIssuedAt(now)
                 .setExpiration(exp)
@@ -32,35 +35,45 @@ public class JwtUtil {
                 .compact();
     }
 
-    public boolean validateToken(String token, String username) {
-        final String extractedUsername = extractUsername(token);
-        return (extractedUsername != null && extractedUsername.equals(username) && !isTokenExpired(token));
-    }
-
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+
+    public <T> T extractClaim(String token, Function<Claims,T> resolver) {
+        final Claims claims = parseClaims(token);
+        return resolver.apply(claims);
+    }
+
+    public List<String> extractRoles(String token) {
+        Claims c = parseClaims(token);
+        Object rolesObj = c.get("roles");
+        if (rolesObj instanceof List<?>) {
+            List<?> raw = (List<?>) rolesObj;
+            List<String> result = new ArrayList<>();
+            for (Object o : raw) result.add(String.valueOf(o));
+            return result;
+        }
+        return Collections.emptyList();
     }
 
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = parseClaims(token);
-        return claimsResolver.apply(claims);
-    }
-
-    private Claims parseClaims(String token) {
+    public boolean validateToken(String token, String username) {
         try {
-            return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+            String extracted = extractUsername(token);
+            return extracted != null && extracted.equals(username) && !isTokenExpired(token);
         } catch (JwtException ex) {
-            throw new RuntimeException("Invalid JWT token", ex);
+            return false;
         }
     }
 
+    private Claims parseClaims(String token) {
+        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+    }
+
     private boolean isTokenExpired(String token) {
-        final Date expiration = extractExpiration(token);
-        return expiration.before(new Date());
+        return extractExpiration(token).before(new Date());
     }
 }
-

@@ -3,6 +3,7 @@ package com.demo.medsahispringboot.Controller;
 import com.demo.medsahispringboot.Entity.User;
 import com.demo.medsahispringboot.Repository.UserRepository;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/admin")
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
     private final UserRepository userRepository;
@@ -44,4 +46,3 @@ public class AdminController {
         return ResponseEntity.ok("User deleted");
     }
 }
-

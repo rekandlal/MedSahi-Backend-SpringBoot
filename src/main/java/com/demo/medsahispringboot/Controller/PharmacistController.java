@@ -3,12 +3,14 @@ package com.demo.medsahispringboot.Controller;
 import com.demo.medsahispringboot.Entity.Medicine;
 import com.demo.medsahispringboot.Service.MedicineService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
 @RestController
 @RequestMapping("/api/pharmacist")
+@PreAuthorize("hasRole('PHARMACIST')")
 public class PharmacistController {
 
     private final MedicineService medicineService;
@@ -17,9 +19,7 @@ public class PharmacistController {
         this.medicineService = medicineService;
     }
 
-    // ---------------------------
     // ADD NEW MEDICINE
-    // ---------------------------
     @PostMapping("/add")
     public ResponseEntity<Object> addMedicine(@RequestBody Medicine medicine) {
         Medicine saved = medicineService.addMedicine(medicine);
@@ -29,11 +29,9 @@ public class PharmacistController {
         ));
     }
 
-    // ---------------------------
     // UPDATE MEDICINE
-    // ---------------------------
     @PutMapping("/update/{id}")
-    public ResponseEntity<Map<String, Object>> updateMedicine(@PathVariable Long id, @RequestBody Medicine medicine) {
+    public ResponseEntity<?> updateMedicine(@PathVariable Long id, @RequestBody Medicine medicine) {
         return medicineService.findById(id)
                 .map(existing -> {
                     existing.setBrandedName(medicine.getBrandedName());
@@ -57,26 +55,19 @@ public class PharmacistController {
                 ));
     }
 
-    // ---------------------------
     // DELETE MEDICINE
-    // ---------------------------
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Object> deleteMedicine(@PathVariable Long id) {
         boolean deleted = medicineService.deleteById(id);
         if (!deleted) {
-            return ResponseEntity.status(404).body(
-                    Map.of("error", "Medicine not found")
-            );
+            return ResponseEntity.status(404).body(Map.of("error", "Medicine not found"));
         }
         return ResponseEntity.ok(Map.of("message", "Medicine deleted successfully"));
     }
 
-    // ---------------------------
-    // ANALYTICS: Top 5 Sold Medicines
-    // ---------------------------
+    // ANALYTICS: Top 5 Sold Medicines (Static Example)
     @GetMapping("/analytics/top-sold")
     public ResponseEntity<List<Map<String, Object>>> getTopSoldMedicines() {
-        // Ye abhi static hai, baad me DB query se nikalega
         List<Map<String, Object>> topSold = List.of(
                 Map.of("medicine", "Atorvastatin", "sold", 120),
                 Map.of("medicine", "Paracetamol", "sold", 100),
@@ -85,12 +76,9 @@ public class PharmacistController {
         return ResponseEntity.ok(topSold);
     }
 
-    // ---------------------------
-    // ANALYTICS: Top 5 Wasted Medicines
-    // ---------------------------
+    // ANALYTICS: Top 5 Wasted Medicines (Static Example)
     @GetMapping("/analytics/top-waste")
     public ResponseEntity<List<Map<String, Object>>> getTopWastedMedicines() {
-        // Ye bhi static abhi ke liye
         List<Map<String, Object>> topWaste = List.of(
                 Map.of("medicine", "Aspirin", "wasted", 15),
                 Map.of("medicine", "Metformin", "wasted", 10),

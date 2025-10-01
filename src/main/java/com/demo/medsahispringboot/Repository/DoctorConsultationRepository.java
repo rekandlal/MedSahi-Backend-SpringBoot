@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface DoctorConsultationRepository extends JpaRepository<DoctorConsultation, Long> {
     List<DoctorConsultation> findByUserId(Long userId);
+    List<DoctorConsultation> findByUserIdAndStatus(Long userId, String status);
+
 }

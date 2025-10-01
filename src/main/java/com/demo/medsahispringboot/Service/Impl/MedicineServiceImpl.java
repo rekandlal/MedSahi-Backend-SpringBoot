@@ -1,7 +1,7 @@
 package com.demo.medsahispringboot.Service.Impl;
 
-
 import com.demo.medsahispringboot.Dto.MedicineDto;
+import com.demo.medsahispringboot.Entity.GenericMedicine;
 import com.demo.medsahispringboot.Entity.Medicine;
 import com.demo.medsahispringboot.Repository.MedicineRepository;
 import com.demo.medsahispringboot.Service.MedicineService;
@@ -23,6 +23,7 @@ public class MedicineServiceImpl implements MedicineService {
     @Override
     public List<MedicineDto> searchMedicine(String keyword) {
         List<Medicine> meds = medicineRepository.findByBrandedNameContainingIgnoreCase(keyword);
+
         return meds.stream().map(m -> {
             List<MedicineDto.GenericDto> generics = m.getGenerics().stream().map(g ->
                     new MedicineDto.GenericDto(
@@ -33,10 +34,15 @@ public class MedicineServiceImpl implements MedicineService {
 
             return new MedicineDto(
                     m.getBrandedName(), m.getIngredient(), m.getDosage(),
-                    m.getManufacturer(), m.getMrp(), m.getFinalPrice(), m.getForm(),
-                    generics
+                    m.getManufacturer(), m.getMrp(), m.getFinalPrice(),
+                    m.getForm(), generics
             );
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<GenericMedicine> searchGeneric(String keyword) {
+        return medicineRepository.searchGenericByName(keyword);
     }
 
     @Override

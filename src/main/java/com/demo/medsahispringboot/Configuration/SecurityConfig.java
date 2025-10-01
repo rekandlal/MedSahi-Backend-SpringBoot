@@ -5,29 +5,27 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
-@EnableMethodSecurity
+@EnableWebSecurity
 public class SecurityConfig {
 
-    private final JwtUtil jwtUtil;
     private final JwtUserDetailsService userDetailsService;
+    private final JwtFilter jwtFilter;
 
-    public SecurityConfig(JwtUtil jwtUtil, JwtUserDetailsService userDetailsService) {
-        this.jwtUtil = jwtUtil;
+    public SecurityConfig(JwtUserDetailsService userDetailsService, JwtFilter jwtFilter) {
         this.userDetailsService = userDetailsService;
+        this.jwtFilter = jwtFilter;
     }
 
     @Bean
-    public JwtFilter jwtFilter() {
-        return new JwtFilter(jwtUtil, userDetailsService);
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
@@ -36,28 +34,22 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
+    public SecurityFilterChain filterChain(org.springframework.security.config.annotation.web.builders.HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())  // old: csrf().disable()
-                .cors(cors -> cors.disable())  // old: cors().and()
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/h2-console/**", "/api/medicine/public/**").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/pharmacist/**").hasRole("PHARMACIST")
-                        .requestMatchers("/api/user/**").hasAnyRole("USER","ADMIN","PHARMACIST")
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/medicine/search/**").hasRole("USER")
+                        .requestMatchers("/api/medicine/order/**").hasRole("USER")
+                        .requestMatchers("/api/medicine/add/**").hasAnyRole("ADMIN","PHARMACIST")
+                        .requestMatchers("/api/medicine/delete/**").hasAnyRole("ADMIN","PHARMACIST")
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .headers(headers -> headers.frameOptions(frame -> frame.disable())); // old: http.headers().frameOptions().disable()
+                .sessionManagement(session -> session.sessionCreationPolicy(
+                        org.springframework.security.config.http.SessionCreationPolicy.STATELESS
+                ));
 
-        http.addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class);
-
+        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
     }
 }

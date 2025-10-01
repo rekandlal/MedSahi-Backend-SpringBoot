@@ -22,6 +22,8 @@ public class DoctorConsultation {
     @ManyToOne
     private User user;
 
+    @ManyToOne
+    private Doctor doctor;   // 🔹 Doctor assign ho gaya
+
     private LocalDateTime requestedAt = LocalDateTime.now();
 }
-

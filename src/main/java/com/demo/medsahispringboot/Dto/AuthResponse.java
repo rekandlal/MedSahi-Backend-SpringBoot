@@ -8,8 +8,8 @@ import lombok.*;
 @AllArgsConstructor
 public class AuthResponse {
     private String token;
-    private String tokenType = "Bearer";
+    private String type = "Bearer";
     private String email;
     private String fullName;
+    private String role;
 }
-

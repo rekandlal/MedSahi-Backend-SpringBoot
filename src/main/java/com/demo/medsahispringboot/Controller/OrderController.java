@@ -30,14 +30,17 @@ public class OrderController {
         this.medicineRepository = medicineRepository;
     }
 
+    // Place order (branded + generic)
     @PostMapping("/place")
     public ResponseEntity<?> placeOrder(Authentication auth,
                                         @RequestBody List<Long> medicineIds) {
         Optional<User> userOpt = userRepository.findByEmail(auth.getName());
-        if (userOpt.isEmpty()) return ResponseEntity.status(404).body("User not found");
+        if (userOpt.isEmpty()) return ResponseEntity.status(404).body(Map.of("error", "User not found"));
         User user = userOpt.get();
 
         List<Medicine> medicines = medicineRepository.findAllById(medicineIds);
+        if (medicines.isEmpty()) return ResponseEntity.badRequest().body(Map.of("error", "No medicines found"));
+
         double total = medicines.stream().mapToDouble(Medicine::getFinalPrice).sum();
 
         Order order = new Order();
@@ -55,14 +58,21 @@ public class OrderController {
         ));
     }
 
+    // Get orders of logged-in user
     @GetMapping("/my-orders")
     public ResponseEntity<?> myOrders(Authentication auth) {
         Optional<User> userOpt = userRepository.findByEmail(auth.getName());
-        if (userOpt.isEmpty()) return ResponseEntity.status(404).body("User not found");
+        if (userOpt.isEmpty()) return ResponseEntity.status(404).body(Map.of("error", "User not found"));
         User user = userOpt.get();
 
         List<Order> orders = orderRepository.findByUserId(user.getId());
         return ResponseEntity.ok(orders);
     }
-}
 
+    // Admin / Pharmacist: get all orders
+    @GetMapping("/all")
+    public ResponseEntity<?> allOrders() {
+        List<Order> orders = orderRepository.findAll();
+        return ResponseEntity.ok(orders);
+    }
+}
