@@ -8,11 +8,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/user")
 @PreAuthorize("hasRole('USER')")
+
 public class UserController {
 
     private final UserRepository userRepo;
@@ -21,40 +21,46 @@ public class UserController {
         this.userRepo = userRepo;
     }
 
-    @GetMapping("/me")
-    public ResponseEntity<?> getProfile(Authentication auth) {
-        String email = auth.getName();
-        Optional<User> uOpt = userRepo.findByEmail(email);
-        if (uOpt.isEmpty()) return ResponseEntity.status(404).body("User not found");
-        User u = uOpt.get();
+    // ✅ Get my profile
+    @GetMapping("/profile")
+    public ResponseEntity<?> profile(Authentication auth) {
+        User u = userRepo.findByEmail(auth.getName()).orElseThrow();
         return ResponseEntity.ok(Map.of(
                 "email", u.getEmail(),
                 "fullName", u.getFullName(),
                 "phone", u.getPhone(),
-                "rewardCoins", u.getRewardCoins()
+                "rewardCoins", u.getRewardCoins(),
+                "roles", u.getRoles().stream().map(r -> r.getName()).toList()
         ));
     }
 
-    @PutMapping("/update")
-    public ResponseEntity<?> updateProfile(Authentication auth, @RequestBody Map<String,String> req) {
-        String email = auth.getName();
-        Optional<User> uOpt = userRepo.findByEmail(email);
-        if (uOpt.isEmpty()) return ResponseEntity.status(404).body("User not found");
-        User u = uOpt.get();
-        if (req.containsKey("fullName")) u.setFullName(req.get("fullName"));
-        if (req.containsKey("phone")) u.setPhone(req.get("phone"));
-        userRepo.save(u);
-        return ResponseEntity.ok("Profile updated");
-    }
-
-    @PostMapping("/reward/add")
-    public ResponseEntity<?> addRewardCoins(Authentication auth, @RequestParam Long coins) {
-        String email = auth.getName();
-        Optional<User> uOpt = userRepo.findByEmail(email);
-        if (uOpt.isEmpty()) return ResponseEntity.status(404).body("User not found");
-        User u = uOpt.get();
+    // ✅ Reward Points (Example API)
+    @PostMapping("/add-coins")
+    public ResponseEntity<?> addCoins(Authentication auth, @RequestParam Long coins) {
+        User u = userRepo.findByEmail(auth.getName()).orElseThrow();
         u.setRewardCoins(u.getRewardCoins() + coins);
         userRepo.save(u);
-        return ResponseEntity.ok(Map.of("message","Reward added","totalCoins", u.getRewardCoins()));
+        return ResponseEntity.ok(Map.of("message", "Coins added", "total", u.getRewardCoins()));
+    }
+
+    // ✅ Example: Lab Test
+    @GetMapping("/labtest")
+    public ResponseEntity<?> labTest() {
+        return ResponseEntity.ok(Map.of("availableTests", new String[]{"Blood Test", "X-Ray", "MRI"}));
+    }
+
+    // ✅ Example: Doctor Consultation
+    @GetMapping("/consult")
+    public ResponseEntity<?> consult() {
+        return ResponseEntity.ok(Map.of("availableDoctors", new String[]{"Dr. Sharma", "Dr. Patel"}));
+    }
+
+    // ✅ Subscription details
+    @GetMapping("/subscription")
+    public ResponseEntity<?> subscription() {
+        return ResponseEntity.ok(Map.of(
+                "plans", new String[]{"Basic", "Premium", "Pro"},
+                "message", "Subscribe to access advanced features"
+        ));
     }
 }

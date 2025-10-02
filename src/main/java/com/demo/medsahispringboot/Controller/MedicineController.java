@@ -36,31 +36,34 @@ public class MedicineController {
         return ResponseEntity.ok(medicineService.searchGeneric(keyword));
     }
 
-    // USER: Place an order
-    @PostMapping("/order")
-    public ResponseEntity<?> placeOrder(@RequestBody Order order) {
-        Order saved = orderService.placeOrder(order);
-        return ResponseEntity.ok(saved);
-    }
+    // order controller me already hai with spring security
 
-    // USER: Orders history
-    @GetMapping("/orders")
-    public ResponseEntity<List<Order>> getOrders(@RequestParam String userEmail) {
-        return ResponseEntity.ok(orderService.getOrdersByUser(userEmail));
-    }
+//    // USER: Place an order
+//    @PostMapping("/order")
+//    public ResponseEntity<?> placeOrder(@RequestBody Order order) {
+//        Order saved = orderService.placeOrder(order);
+//        return ResponseEntity.ok(saved);
+//    }
+//
+//    // USER: Orders history
+//    @GetMapping("/orders")
+//    public ResponseEntity<List<Order>> getOrders(@RequestParam String userEmail) {
+//        return ResponseEntity.ok(orderService.getOrdersByUser(userEmail));
+//    }
+//
+//    // ADMIN / PHARMACIST: Add new medicine
+//    @PostMapping("/add")
+//    public ResponseEntity<?> addMedicine(@RequestBody Medicine medicine) {
+//        Medicine saved = medicineService.addMedicine(medicine);
+//        return ResponseEntity.ok(saved);
+//    }
+//
+//    // ADMIN / PHARMACIST: Delete medicine
+//    @DeleteMapping("/delete/{id}")
+//    public ResponseEntity<?> deleteMedicine(@PathVariable Long id) {
+//        boolean deleted = medicineService.deleteById(id);
+//        if (!deleted) return ResponseEntity.status(404).body(Map.of("error","Medicine not found"));
+//        return ResponseEntity.ok(Map.of("message","Deleted successfully"));
+//    }
 
-    // ADMIN / PHARMACIST: Add new medicine
-    @PostMapping("/add")
-    public ResponseEntity<?> addMedicine(@RequestBody Medicine medicine) {
-        Medicine saved = medicineService.addMedicine(medicine);
-        return ResponseEntity.ok(saved);
-    }
-
-    // ADMIN / PHARMACIST: Delete medicine
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> deleteMedicine(@PathVariable Long id) {
-        boolean deleted = medicineService.deleteById(id);
-        if (!deleted) return ResponseEntity.status(404).body(Map.of("error","Medicine not found"));
-        return ResponseEntity.ok(Map.of("message","Deleted successfully"));
-    }
 }

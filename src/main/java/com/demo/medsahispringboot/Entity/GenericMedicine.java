@@ -1,5 +1,6 @@
 package com.demo.medsahispringboot.Entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,5 +22,10 @@ public class GenericMedicine {
     private Double mrp;
     private Double finalPrice;
     private String form;
+
+    @ManyToOne
+    @JoinColumn(name = "medicine_id")
+    @JsonBackReference
+    private Medicine medicine;
 }
 

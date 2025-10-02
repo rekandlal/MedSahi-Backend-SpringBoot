@@ -9,51 +9,51 @@ import com.demo.medsahispringboot.Repository.UserRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
-
-import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class JwtUserDetailsService implements UserDetailsService {
 
-    private final UserRepository userRepo;
-    private final AdminRepository adminRepo;
-    private final PharmacistRepository pharmacistRepo;
+    private final UserRepository userRepository;
+    private final AdminRepository adminRepository;
+    private final PharmacistRepository pharmacistRepository;
 
-    public JwtUserDetailsService(UserRepository userRepo,
-                                 AdminRepository adminRepo,
-                                 PharmacistRepository pharmacistRepo) {
-        this.userRepo = userRepo;
-        this.adminRepo = adminRepo;
-        this.pharmacistRepo = pharmacistRepo;
+    public JwtUserDetailsService(UserRepository userRepository, AdminRepository adminRepository, PharmacistRepository pharmacistRepository) {
+        this.userRepository = userRepository;
+        this.adminRepository = adminRepository;
+        this.pharmacistRepository = pharmacistRepository;
     }
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        if (userRepo.findByEmail(email).isPresent()) {
-            User u = userRepo.findByEmail(email).get();
-            return org.springframework.security.core.userdetails.User.builder()
-                    .username(u.getEmail())
-                    .password(u.getPassword())
-                    .authorities(Set.of(new SimpleGrantedAuthority("ROLE_USER")))
-                    .disabled(!u.isEnabled())
-                    .build();
-        } else if (adminRepo.findByEmail(email).isPresent()) {
-            Admin a = adminRepo.findByEmail(email).get();
-            return org.springframework.security.core.userdetails.User.builder()
-                    .username(a.getEmail())
-                    .password(a.getPassword())
-                    .authorities(Set.of(new SimpleGrantedAuthority("ROLE_ADMIN")))
-                    .disabled(!a.isEnabled())
-                    .build();
-        } else if (pharmacistRepo.findByEmail(email).isPresent()) {
-            Pharmacist p = pharmacistRepo.findByEmail(email).get();
-            return org.springframework.security.core.userdetails.User.builder()
-                    .username(p.getEmail())
-                    .password(p.getPassword())
-                    .authorities(Set.of(new SimpleGrantedAuthority("ROLE_PHARMACIST")))
-                    .disabled(!p.isEnabled())
-                    .build();
+        // User
+        if(userRepository.findByEmail(email).isPresent()){
+            User u = userRepository.findByEmail(email).get();
+            return new org.springframework.security.core.userdetails.User(
+                    u.getEmail(),
+                    u.getPassword(),
+                    u.getRoles().stream().map(r -> new SimpleGrantedAuthority("ROLE_" + r.getName())).toList()
+            );
         }
-        throw new UsernameNotFoundException("User not found");
+        // Admin
+        else if(adminRepository.findByEmail(email).isPresent()){
+            Admin a = adminRepository.findByEmail(email).get();
+            return new org.springframework.security.core.userdetails.User(
+                    a.getEmail(),
+                    a.getPassword(),
+                    a.getRoles().stream().map(r -> new SimpleGrantedAuthority("ROLE_" + r.getName())).toList()
+            );
+        }
+        // Pharmacist
+        else if(pharmacistRepository.findByEmail(email).isPresent()){
+            Pharmacist p = pharmacistRepository.findByEmail(email).get();
+            return new org.springframework.security.core.userdetails.User(
+                    p.getEmail(),
+                    p.getPassword(),
+                    p.getRoles().stream().map(r -> new SimpleGrantedAuthority("ROLE_" + r.getName())).toList()
+            );
+        }
+        else throw new UsernameNotFoundException("User not found with email: " + email);
     }
+
 }

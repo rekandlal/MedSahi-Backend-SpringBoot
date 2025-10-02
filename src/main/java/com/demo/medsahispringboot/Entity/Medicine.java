@@ -1,5 +1,6 @@
 package com.demo.medsahispringboot.Entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,8 +25,11 @@ public class Medicine {
     private Double finalPrice;
     private String form;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "medicine_id") // FK in GenericMedicine table
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "medicine")
+    @JsonManagedReference   // 👈 Pair with @JsonBackReference
     private List<GenericMedicine> generics;
+
+
+    @Column(nullable = false) private String addedBy; // Pharmacist email/username who added this
 }
 

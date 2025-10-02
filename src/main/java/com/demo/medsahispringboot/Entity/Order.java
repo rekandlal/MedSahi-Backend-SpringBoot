@@ -22,16 +22,16 @@ public class Order {
     @JoinColumn(name = "user_id")
     private User user;
 
+    // Updated: Only generic medicines
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-            name = "order_medicines",
+            name = "order_generic_medicines",
             joinColumns = @JoinColumn(name = "order_id"),
-            inverseJoinColumns = @JoinColumn(name = "medicine_id")
+            inverseJoinColumns = @JoinColumn(name = "generic_medicine_id")
     )
-    private List<Medicine> medicines;
+    private List<GenericMedicine> genericMedicines;
 
     private Double totalAmount;
     private String status; // PLACED, DELIVERED, CANCELLED etc.
-
     private LocalDateTime orderTime;
 }

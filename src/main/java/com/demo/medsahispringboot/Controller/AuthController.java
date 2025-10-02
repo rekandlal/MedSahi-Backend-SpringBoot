@@ -2,160 +2,193 @@ package com.demo.medsahispringboot.Controller;
 
 import com.demo.medsahispringboot.Configuration.JwtUtil;
 import com.demo.medsahispringboot.Dto.AuthRequest;
-import com.demo.medsahispringboot.Dto.AuthResponse;
+
 import com.demo.medsahispringboot.Dto.RegisterRequest;
+
 import com.demo.medsahispringboot.Entity.Admin;
 import com.demo.medsahispringboot.Entity.Pharmacist;
+import com.demo.medsahispringboot.Entity.Role;
 import com.demo.medsahispringboot.Entity.User;
 import com.demo.medsahispringboot.Repository.AdminRepository;
 import com.demo.medsahispringboot.Repository.PharmacistRepository;
+import com.demo.medsahispringboot.Repository.RoleRepository;
 import com.demo.medsahispringboot.Repository.UserRepository;
-import com.demo.medsahispringboot.Service.AuthService;
-import com.demo.medsahispringboot.Service.JwtUserDetailsService;
-import com.demo.medsahispringboot.Service.TokenBlacklistService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.*;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
+import java.util.*;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final AuthenticationManager authenticationManager;
+    private final UserRepository userRepo;
+    private final AdminRepository adminRepo;
+    private final PharmacistRepository pharmacistRepo;
+    private final PasswordEncoder encoder;
+    private final AuthenticationManager authManager;
     private final JwtUtil jwtUtil;
-    private final JwtUserDetailsService userDetailsService;
-    private final AuthService authService;
-    private final UserRepository userRepository;
-    private final AdminRepository adminRepository;
-    private final PharmacistRepository pharmacistRepository;
-    private final TokenBlacklistService blacklistService;
 
-    public AuthController(AuthenticationManager authenticationManager,
-                          JwtUtil jwtUtil,
-                          JwtUserDetailsService userDetailsService,
-                          AuthService authService,
-                          UserRepository userRepository,
-                          AdminRepository adminRepository,
-                          PharmacistRepository pharmacistRepository,
-                          TokenBlacklistService blacklistService) {
-        this.authenticationManager = authenticationManager;
+    private final Map<String, Long> tokenBlacklist = new HashMap<>();
+    private final RoleRepository roleRepository;
+
+    public AuthController(UserRepository userRepo, AdminRepository adminRepo,
+                          PharmacistRepository pharmacistRepo, PasswordEncoder encoder,
+                          AuthenticationManager authManager, JwtUtil jwtUtil, RoleRepository roleRepository) {
+        this.userRepo = userRepo;
+        this.adminRepo = adminRepo;
+        this.pharmacistRepo = pharmacistRepo;
+        this.encoder = encoder;
+        this.authManager = authManager;
         this.jwtUtil = jwtUtil;
-        this.userDetailsService = userDetailsService;
-        this.authService = authService;
-        this.userRepository = userRepository;
-        this.adminRepository = adminRepository;
-        this.pharmacistRepository = pharmacistRepository;
-        this.blacklistService = blacklistService;
+        this.roleRepository = roleRepository;
     }
 
-    // ----------------- REGISTER -----------------
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
-        try {
-            Object saved = authService.registerNewUser(req);
-            return ResponseEntity.ok(Map.of(
-                    "message", "registered",
-                    "email", req.getEmail(),
-                    "role", req.getRole()
-            ));
-        } catch (Exception ex) {
-            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
-        }
+    // -------- REGISTER --------
+    @PostMapping("/register/user")
+    public ResponseEntity<?> registerUser(@RequestBody RegisterRequest req){
+        if(userRepo.existsByEmail(req.getEmail())) return ResponseEntity.badRequest().body(Map.of("error","Email exists"));
+        User u = new User();
+        u.setEmail(req.getEmail());
+        u.setFullName(req.getFullName());
+        u.setPhone(req.getPhone());
+        u.setPassword(encoder.encode(req.getPassword()));
+
+        // Default role USER
+        Role role = roleRepository.findByName("USER")
+                .orElseGet(() -> roleRepository.save(new Role(null, "USER")));
+        u.getRoles().add(role);
+
+
+        userRepo.save(u);
+        return ResponseEntity.ok(Map.of("message","User registered successfully"));
     }
 
-    // ----------------- LOGIN -----------------
+    @PostMapping("/register/admin")
+    public ResponseEntity<?> registerAdmin(@RequestBody RegisterRequest req){
+        if(adminRepo.existsByEmail(req.getEmail())) return ResponseEntity.badRequest().body(Map.of("error","Email exists"));
+        Admin a = new Admin();
+        a.setEmail(req.getEmail());
+        a.setFullName(req.getFullName());
+        a.setPhone(req.getPhone());
+        a.setPassword(encoder.encode(req.getPassword()));
+
+        // Default role ADMIN
+        Role role = roleRepository.findByName("ADMIN")
+                .orElseGet(() -> roleRepository.save(new Role(null, "ADMIN")));
+        a.getRoles().add(role);
+
+        adminRepo.save(a);
+        return ResponseEntity.ok(Map.of("message","Admin registered successfully"));
+    }
+
+    @PostMapping("/register/pharmacist")
+    public ResponseEntity<?> registerPharmacist(@RequestBody RegisterRequest req){
+        if(pharmacistRepo.existsByEmail(req.getEmail())) return ResponseEntity.badRequest().body(Map.of("error","Email exists"));
+        Pharmacist p = new Pharmacist();
+        p.setEmail(req.getEmail());
+        p.setFullName(req.getFullName());
+        p.setPhone(req.getPhone());
+        p.setLicenseNumber(req.getLicenseNumber());
+        p.setPassword(encoder.encode(req.getPassword()));
+
+        // Default role PHARMACIST
+        Role role = roleRepository.findByName("PHARMACIST")
+                .orElseGet(() -> roleRepository.save(new Role(null, "PHARMACIST")));
+        p.getRoles().add(role);
+
+        pharmacistRepo.save(p);
+        return ResponseEntity.ok(Map.of("message","Pharmacist registered successfully"));
+    }
+
+    // -------- LOGIN --------
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthRequest request) {
+    public ResponseEntity<?> login(@RequestBody AuthRequest req){
         try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+            authManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword())
             );
-
-            UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
-            String token = jwtUtil.generateToken(userDetails.getUsername(),
-                    userDetails.getAuthorities().stream()
-                            .map(a -> a.getAuthority())
-                            .toList()
-            );
-
-            String role = userDetails.getAuthorities().stream().findFirst().get().getAuthority().replace("ROLE_", "");
-
-            // Fetch fullName from the correct table
-            String fullName = "";
-            if (role.equals("USER")) {
-                User u = userRepository.findByEmail(request.getEmail()).get();
-                fullName = u.getFullName();
-            } else if (role.equals("ADMIN")) {
-                Admin a = adminRepository.findByEmail(request.getEmail()).get();
-                fullName = a.getFullName();
-            } else if (role.equals("PHARMACIST")) {
-                Pharmacist p = pharmacistRepository.findByEmail(request.getEmail()).get();
-                fullName = p.getFullName();
-            }
-
-            AuthResponse resp = new AuthResponse(token, "Bearer", request.getEmail(), fullName, String.valueOf(java.util.List.of(role)));
-            return ResponseEntity.ok(resp);
-
-        } catch (BadCredentialsException ex) {
-            return ResponseEntity.status(401).body(Map.of("error", "Invalid credentials"));
-        } catch (DisabledException ex) {
-            return ResponseEntity.status(403).body(Map.of("error", "User disabled"));
-        } catch (Exception ex) {
-            return ResponseEntity.status(500).body(Map.of("error", "Authentication failed"));
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(401).body(Map.of("error","Invalid credentials"));
         }
+
+        String role = "";
+        String fullName = "";
+
+        // check which table the user exists in
+        if(userRepo.findByEmail(req.getEmail()).isPresent()){
+            role = "USER";
+            fullName = userRepo.findByEmail(req.getEmail()).get().getFullName();
+        } else if(adminRepo.findByEmail(req.getEmail()).isPresent()){
+            role = "ADMIN";
+            fullName = adminRepo.findByEmail(req.getEmail()).get().getFullName();
+        } else if(pharmacistRepo.findByEmail(req.getEmail()).isPresent()){
+            role = "PHARMACIST";
+            fullName = pharmacistRepo.findByEmail(req.getEmail()).get().getFullName();
+        } else return ResponseEntity.status(401).body(Map.of("error","User not found"));
+
+        // ✅ Pass the role as list to JWT
+        String token = jwtUtil.generateToken(req.getEmail(), List.of(role));
+
+        return ResponseEntity.ok(Map.of(
+                "token", token,
+                "type", "Bearer",
+                "email", req.getEmail(),
+                "fullName", fullName,
+                "roles", List.of(role)
+        ));
     }
 
-    // ----------------- LOGOUT -----------------
+
+    // -------- LOGOUT --------
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestHeader(name = "Authorization", required = false) String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.badRequest().body(Map.of("error", "No Bearer token provided"));
+            return ResponseEntity.badRequest().body(Map.of("error", "No token provided"));
         }
+
         String token = authHeader.substring(7);
         try {
-            long ttl = jwtUtil.extractExpiration(token).getTime() - System.currentTimeMillis();
-            if (ttl <= 0) return ResponseEntity.ok(Map.of("message", "Token already expired"));
-            blacklistService.blacklist(token, ttl);
-            return ResponseEntity.ok(Map.of("message", "Logged out"));
-        } catch (Exception ex) {
+            // JWT token expiry check
+            Date exp = jwtUtil.extractExpiration(token);
+            long ttl = exp.getTime() - System.currentTimeMillis();
+
+            if (ttl <= 0) {
+                return ResponseEntity.ok(Map.of("message", "Token already expired"));
+            }
+
+            // Token ko blacklist me add karo
+            tokenBlacklist.put(token, System.currentTimeMillis() + ttl);
+
+            return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+        } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Invalid token"));
         }
     }
 
-    // ----------------- CURRENT USER INFO -----------------
+
+
+    // -------- CURRENT USER --------
     @GetMapping("/me")
-    public ResponseEntity<?> me(@RequestHeader(name = "Authorization", required = false) String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.status(401).body(Map.of("error", "No token"));
-        }
+    public ResponseEntity<?> me(@RequestHeader(name="Authorization") String authHeader){
+        if(authHeader == null || !authHeader.startsWith("Bearer ")) return ResponseEntity.status(401).body(Map.of("error","No token"));
         String token = authHeader.substring(7);
-        if (blacklistService.isBlacklisted(token))
-            return ResponseEntity.status(401).body(Map.of("error", "Token blacklisted"));
+
+        Long expiry = tokenBlacklist.get(token);
+        if(expiry != null && System.currentTimeMillis() < expiry){
+            return ResponseEntity.status(401).body(Map.of("error","Token blacklisted"));
+        }
+
         try {
             String email = jwtUtil.extractUsername(token);
-            String role = jwtUtil.extractRoles(token).get(0).replace("ROLE_", "");
-            String fullName = "";
-
-            if (role.equals("USER")) fullName = userRepository.findByEmail(email).get().getFullName();
-            else if (role.equals("ADMIN")) fullName = adminRepository.findByEmail(email).get().getFullName();
-            else if (role.equals("PHARMACIST")) fullName = pharmacistRepository.findByEmail(email).get().getFullName();
-
+            List<String> roles = jwtUtil.extractRoles(token);
             return ResponseEntity.ok(Map.of(
                     "email", email,
-                    "fullName", fullName,
-                    "role", role
+                    "roles", roles
             ));
-        } catch (Exception ex) {
-            return ResponseEntity.status(401).body(Map.of("error", "Invalid token"));
+        } catch(Exception e){
+            return ResponseEntity.status(401).body(Map.of("error","Invalid token"));
         }
-    }
-
-    // ----------------- AVAILABLE ROLES -----------------
-    @GetMapping("/roles")
-    public ResponseEntity<?> roles() {
-        return ResponseEntity.ok(java.util.List.of("USER", "ADMIN", "PHARMACIST"));
     }
 }
